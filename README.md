@@ -1,20 +1,24 @@
 # PoolPing
 
-Практический пример паттерна **Worker Pool** на Go — параллельная проверка доступности хостов через ICMP.
+Практический пример паттерна **Worker Pool** на Go — параллельная проверка
+доступности хостов через ICMP.
 
 ## Как это работает
 
-```
+```text
 hosts -> [jobs chan] -> [worker 1]  \
-                    -> [worker 2]  --> [results chan] -> вывод
-                    -> [worker N]  /
+                     -> [worker 2]  --> [results chan] -> вывод
+                     -> [worker N]  /
 ```
 
-Хосты отправляются в канал `jobs`, пул воркеров параллельно отправляет ICMP echo request и пишет результат в канал `results`. Отмена через `context` останавливает всё чисто.
+Хосты отправляются в канал `jobs`, пул воркеров параллельно отправляет ICMP echo
+request и пишет результат в канал `results`. Отмена через `context` останавливает
+всё чисто.
 
 ## Структура
 
-```
+```text
+
 PoolPing/
 ├── cmd/
 │   └── PoolPing/
@@ -44,7 +48,8 @@ go run ./cmd/PoolPing/ -config path/to/config.yml
 
 Пример вывода:
 
-```
+```text
+
 Results:
   - gitlab.com                                         48ms
   - github.com                                         89ms
@@ -54,6 +59,7 @@ Results:
 Total host processed: 42
   - Alive: 21
   - Dead: 21
+
 ```
 
 ## Конфиг
@@ -69,24 +75,22 @@ hosts:
   # ...
 ```
 
-Параметры можно переопределить через env:
-
-```bash
-POOLPING_WORKERS=20 POOLPING_TIMEOUT_MS=1000 go run ./cmd/PoolPing/
-```
-
 ## API
 
 ```go
+
 func PingPool(ctx context.Context, numWorkers int, timeout time.Duration, jobs <-chan string) <-chan Result
+
 ```
 
 ```go
+
 type Result struct {
     Host    string
     Latency time.Duration
     Err     error        // nil если хост доступен
 }
+
 ```
 
 ## Особенности
