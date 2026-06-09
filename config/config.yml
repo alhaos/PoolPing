@@ -1,9 +1,65 @@
 # PoolPing configuration file
 
-# Number of competing workers
 workers: 10
+timeout_ms: 3000
+
 hosts:
-  - ya.ru
-  - mail.ru
+  # CDN / DNS
+  - cloudflare.com
+  - 1.1.1.1
+  - 8.8.8.8
+  - 8.8.4.4
+  - 9.9.9.9
+
+  # Big Tech
   - google.com
-  - 
+  - microsoft.com
+  - apple.com
+  - amazon.com
+  - meta.com
+
+  # Dev
+  - github.com
+  - gitlab.com
+  - golang.org
+  - pkg.go.dev
+  - stackoverflow.com
+  - hub.docker.com
+
+  # Russian services
+  - ya.ru
+  - yandex.ru
+  - mail.ru
+  - vk.com
+  - ok.ru
+  - habr.com
+  - 2gis.ru
+
+  # Streaming / Media
+  - youtube.com
+  - twitch.tv
+  - spotify.com
+  - netflix.com
+
+  # Infra / Cloud
+  - aws.amazon.com
+  - azure.microsoft.com
+  - cloud.google.com
+  - digitalocean.com
+  - hetzner.com
+
+  # Monitoring / DevOps
+  - grafana.com
+  - prometheus.io
+  - zabbix.com
+  - datadog.com
+
+  # Misc
+  - wikipedia.org
+  - reddit.com
+  - telegram.org
+  - anthropic.com
+
+  # Should fail
+  - nonexistent.invalid
+  - 192.168.255.254
