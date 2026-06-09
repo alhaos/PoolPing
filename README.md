@@ -1,6 +1,6 @@
 # PoolPing
 
-Практический пример паттерна **Worker Pool** на Go — параллельная проверка доступности хостов по TCP.
+Практический пример паттерна **Worker Pool** на Go — параллельная проверка доступности хостов через ICMP.
 
 ## Как это работает
 
@@ -10,45 +10,75 @@ hosts -> [jobs chan] -> [worker 1]  \
                     -> [worker N]  /
 ```
 
-Хосты отправляются в канал `jobs`, пул воркеров параллельно делает TCP-коннект на порт 80 и отправляет результат в канал `results`. Отмена через `context` останавливает всё чисто.
+Хосты отправляются в канал `jobs`, пул воркеров параллельно отправляет ICMP echo request и пишет результат в канал `results`. Отмена через `context` останавливает всё чисто.
 
 ## Структура
 
 ```
-pingpool/
-├── pingpool.go       # пакет: PingPool + Result
-└── cmd/
-    └── ping/
-        └── main.go   # точка входа
+PoolPing/
+├── cmd/
+│   └── PoolPing/
+│       └── main.go           # точка входа
+├── config/
+│   └── config.yml            # список хостов и настройки
+├── internal/
+│   ├── config/
+│   │   └── config.go         # загрузка конфига через cleanenv
+│   └── pingpool/
+│       └── pingpool.go       # PingPool + Result
+├── go.mod
+└── go.sum
 ```
 
 ## Запуск
 
+> Требуются права администратора (Windows) или root (Linux) для ICMP сокетов.
+
 ```bash
-go run ./cmd/ping/
+# с дефолтным конфигом
+go run ./cmd/PoolPing/
+
+# с кастомным конфигом
+go run ./cmd/PoolPing/ -config path/to/config.yml
 ```
 
 Пример вывода:
 
 ```
-Checking 10 hosts with 5 workers...
+Results:
+  - gitlab.com                                         48ms
+  - github.com                                         89ms
+  - ya.ru                                              51ms
+  - amazon.com                                         no reply
+  - nonexistent.invalid                                lookup nonexistent.invalid: no such host
+Total host processed: 42
+  - Alive: 21
+  - Dead: 21
+```
 
-HOST                      LATENCY    STATUS
-----                      -------    ------
-cloudflare.com            12ms       OK
-google.com                25ms       OK
-github.com                31ms       OK
-ya.ru                     55ms       OK
-nonexistent.invalid       1ms        FAIL
-192.168.1.1               1ms        FAIL
+## Конфиг
 
-Done in 1.2s
+```yaml
+workers: 10       # количество воркеров
+timeoutMs: 3000   # таймаут ICMP в миллисекундах
+
+hosts:
+  - google.com
+  - github.com
+  - 8.8.8.8
+  # ...
+```
+
+Параметры можно переопределить через env:
+
+```bash
+POOLPING_WORKERS=20 POOLPING_TIMEOUT_MS=1000 go run ./cmd/PoolPing/
 ```
 
 ## API
 
 ```go
-func PingPool(ctx context.Context, numWorkers int, jobs <-chan string) <-chan Result
+func PingPool(ctx context.Context, numWorkers int, timeout time.Duration, jobs <-chan string) <-chan Result
 ```
 
 ```go
@@ -61,6 +91,7 @@ type Result struct {
 
 ## Особенности
 
-- TCP-коннект на порт 80 — не требует root и работает везде (в отличие от ICMP)
+- Настоящий ICMP ping через [pro-bing](https://github.com/prometheus-community/pro-bing)
 - `Ctrl+C` корректно останавливает пул через `signal.NotifyContext`
+- Результаты выводятся сразу по мере готовности — порядок вывода = порядок завершения воркеров
 - Общее время ≈ время самого медленного хоста, а не сумма всех
