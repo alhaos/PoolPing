@@ -1,0 +1,9 @@
+# PoolPing configuration file
+
+# Number of competing workers
+workers: 10
+hosts:
+  - ya.ru
+  - mail.ru
+  - google.com
+  - 
